@@ -1,7 +1,7 @@
 package org.chens.admin.exception;
 
 
-import org.chens.framework.enums.IBaseEnum;
+import org.chens.core.enums.IBaseEnum;
 
 /**
  * 错误异常枚举

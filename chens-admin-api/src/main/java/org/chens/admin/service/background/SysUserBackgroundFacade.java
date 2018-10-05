@@ -2,6 +2,7 @@ package org.chens.admin.service.background;
 
 import org.chens.admin.param.Role;
 import org.chens.admin.param.RolesInUserVo;
+import org.chens.admin.param.User;
 import org.chens.core.vo.Result;
 
 import java.util.List;
@@ -29,4 +30,18 @@ public interface SysUserBackgroundFacade {
      * @return
      */
     Result<Boolean> addRolesInUser(RolesInUserVo rolesInUserVo);
+
+    /**
+     * 保存用户
+     * @param user
+     * @return
+     */
+    Result<Boolean> insert(User user);
+
+    /**
+     * 更新用户
+     * @param user
+     * @return
+     */
+    Result<Boolean> updateById(User user);
 }

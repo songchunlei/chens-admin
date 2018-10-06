@@ -1,7 +1,6 @@
 package org.chens.admin.facade.impl.background;
 
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
-import com.baomidou.mybatisplus.plugins.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.chens.admin.constants.AdminConstants;
 import org.chens.admin.entity.SysRole;
@@ -15,12 +14,14 @@ import org.chens.admin.service.ISysRoleService;
 import org.chens.admin.service.ISysUserRoleService;
 import org.chens.admin.service.ISysUserService;
 import org.chens.admin.service.background.SysUserBackgroundFacade;
-import org.chens.admin.vo.RestPwd;
+import org.chens.admin.param.RestPwd;
+import org.chens.app.util.PageHelper;
 import org.chens.core.constants.CommonConstants;
 import org.chens.core.enums.YesNoEnum;
-import org.chens.core.exception.BaseException;
 import org.chens.core.exception.BaseExceptionEnum;
 import org.chens.core.util.StringUtils;
+import org.chens.core.vo.PageResult;
+import org.chens.core.vo.QueryPageEntity;
 import org.chens.core.vo.Result;
 import org.chens.framework.security.IPasswordCoder;
 import org.chens.framework.security.impl.PasswordCoderByBcrypt;
@@ -49,9 +50,7 @@ public class SysUserBackgroundFacadeImpl implements SysUserBackgroundFacade {
     @Autowired
     private ISysUserService sysUserService;
 
-
     private IPasswordCoder passwordCoder = new PasswordCoderByBcrypt();
-
 
     @Override
     public Result<List<Role>> getRoleListByUserId(String userId) {
@@ -77,33 +76,33 @@ public class SysUserBackgroundFacadeImpl implements SysUserBackgroundFacade {
     }
 
     /**
-     * 重构创建用户方法
-     * 增加加密密码算法
+     * 重构创建用户方法 增加加密密码算法
      *
      * @param user
      * @return
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result<Boolean> insert(User user)  {
-        //对密码加密
+    public Result<Boolean> insert(User user) {
+        // 对密码加密
         String password = user.getPassword();
         if (StringUtils.isEmpty(password)) {
-            //设置默认密码
+            // 设置默认密码
             password = CommonConstants.DEFAULT_PASSWORD;
         }
-        //拼装SysUser
-        SysUser sysUser = BeanUtil.do2bo(user,SysUser.class);
+        // 拼装SysUser
+        SysUser sysUser = BeanUtil.do2bo(user, SysUser.class);
         sysUser.setPassword(passwordCoder.encoder(password));
         sysUser.setIsDelete(YesNoEnum.NO.getCode());
-        //创建用户
+        // 创建用户
         sysUserService.insert(sysUser);
-        //创建角色
+        // 创建角色
         if (StringUtils.isNotEmpty(sysUser.getId())) {
             if (!CollectionUtils.isEmpty(sysUser.getRoles())) {
                 addRolesInUser(new RolesInUserVo(user.getId(), sysUser.getRoles(), null));
             } else {
-                addRolesInUser(new RolesInUserVo(user.getId(), Arrays.asList(AdminConstants.SYSROLE_COMMON_ROLE), null));
+                addRolesInUser(
+                        new RolesInUserVo(user.getId(), Arrays.asList(AdminConstants.SYSROLE_COMMON_ROLE), null));
             }
         }
 
@@ -111,8 +110,7 @@ public class SysUserBackgroundFacadeImpl implements SysUserBackgroundFacade {
     }
 
     /**
-     * 重构用户更新方法
-     * 增加保存角色
+     * 重构用户更新方法 增加保存角色
      *
      * @param user
      * @return
@@ -120,62 +118,71 @@ public class SysUserBackgroundFacadeImpl implements SysUserBackgroundFacade {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Result<Boolean> updateById(User user) {
-        if(StringUtils.isEmpty(user.getId())){
-            return Result.getError(BaseExceptionEnum.DATA_REQUEST_ERROR.getCode(),"用户id为空");
+        if (StringUtils.isEmpty(user.getId())) {
+            return Result.getError(BaseExceptionEnum.DATA_REQUEST_ERROR.getCode(), "用户id为空");
         }
         if (user != null && !CollectionUtils.isEmpty(user.getRoles())) {
-            //用户id
+            // 用户id
             String userId = user.getId();
-            //1.先清空当前角色
+            // 1.先清空当前角色
             SysUserRole deleteSysUserRole = new SysUserRole();
             deleteSysUserRole.setUserId(userId);
             sysUserRoleService.delete(new EntityWrapper<>(deleteSysUserRole));
-            //2.替换新角色
+            // 2.替换新角色
             addRolesInUser(new RolesInUserVo(userId, user.getRoles(), null));
         }
-        //拼装SysUser
-        SysUser sysUser = BeanUtil.do2bo(user,SysUser.class);
+        // 拼装SysUser
+        SysUser sysUser = BeanUtil.do2bo(user, SysUser.class);
         if (StringUtils.isNotEmpty(user.getPassword())) {
             sysUser.setPassword(passwordCoder.encoder(sysUser.getPassword()));
         }
         return Result.getSuccess(sysUserService.updateById(sysUser));
     }
 
-
     @Override
-    @Transactional
-    public String restPwd(RestPwd restPwd) {
+    public Result<String> restPwd(RestPwd restPwd) {
         String password = CommonConstants.DEFAULT_PASSWORD;
         if (restPwd.isRandom()) {
-            password = ToolUtil.getRandomString(16);
+            password = StringUtils.getRandomString(null, 16);
         }
         SysUser sysUser = new SysUser();
         sysUser.setPassword(password);
         sysUser.setId(restPwd.getUserId());
-        if (this.updateById(sysUser)) {
-            return password;
+        if (sysUserService.updateById(sysUser)) {
+            return Result.getSuccess(password);
         }
-        return null;
+        return Result.getError(BaseExceptionEnum.NO_UPDATE);
     }
 
     @Override
-    public Result<Page<SysUser>> getUserListByRoleId(Page<SysUser> page, SysUser user) {
-        if (StringUtils.isEmpty(user.getRoleId())) {
-            throw new BaseException(AdminExceptionEnum.ROLE_ID_IS_NULL);
+    public Result<PageResult<User>> getUserListByRoleId(QueryPageEntity<User> page) {
+        if (page == null) {
+            return Result.getError(BaseExceptionEnum.REQUEST_NULL);
         }
-        page.setRecords(baseMapper.getUserListByRoleId(page, user));
-        return page;
+        if (StringUtils.isEmpty(page.getSearch().getRoleId())) {
+            return Result.getError(AdminExceptionEnum.ROLE_ID_IS_NULL);
+        }
+        PageResult<User> userPage = PageHelper.autoQueryPage(sysUserService, page, User.class, SysUser.class);
+        return Result.getSuccess(userPage);
     }
 
     @Override
-    public Result<Page<SysUser>> getUserListByTenantId(Page<SysUser> page, User user) {
-        if (StringUtils.isEmpty(user.getTenantId())) {
-            log.error("SysUserServiceImpl==>getUserListByTenantId==>" + AdminExceptionEnum.TENANT_ID_IS_NULL);
+    public Result<PageResult<User>> getUserListByTenantId(QueryPageEntity<User> page, String tenantId) {
+        if (page == null) {
+            return Result.getError(BaseExceptionEnum.REQUEST_NULL);
+        }
+        if (StringUtils.isEmpty(tenantId)) {
             return Result.getError(AdminExceptionEnum.TENANT_ID_IS_NULL);
         }
-        SysUser query = new SysUser();
-        query.setTenantId(user.getTenantId());
-        return Result.getSuccess(sysUserService.selectPage(page, new EntityWrapper<>(query)));
+        // 设置当前tenantId
+        User query = page.getSearch();
+        if (query == null) {
+            query = new User();
+        }
+        query.setTenantId(tenantId);
+        page.setSearch(query);
+        PageResult<User> userPage = PageHelper.autoQueryPage(sysUserService, page, User.class, SysUser.class);
+        return Result.getSuccess(userPage);
     }
 
 }

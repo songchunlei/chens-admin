@@ -18,6 +18,7 @@
         <module>chens-admin-service</module>
         <module>chens-admin-api</module>
         <module>chens-admin-provider</module>
+        <module>chens-admin-web</module>
     </modules>
 
     <properties>
@@ -37,6 +38,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>chens-admin-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>chens-admin-provider</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

@@ -1,8 +1,11 @@
 package org.chens.admin.service.background;
 
+import org.chens.admin.param.RestPwd;
 import org.chens.admin.param.Role;
 import org.chens.admin.param.RolesInUserVo;
 import org.chens.admin.param.User;
+import org.chens.core.vo.PageResult;
+import org.chens.core.vo.QueryPageEntity;
 import org.chens.core.vo.Result;
 
 import java.util.List;
@@ -44,4 +47,26 @@ public interface SysUserBackgroundFacade {
      * @return
      */
     Result<Boolean> updateById(User user);
+
+    /**
+     * 重置密码
+     * @param restPwd
+     * @return
+     */
+    Result<String> restPwd(RestPwd restPwd);
+
+    /**
+     * 根据角色id获取用户列表
+     * @param page
+     * @return
+     */
+    Result<PageResult<User>> getUserListByRoleId(QueryPageEntity<User> page);
+
+    /**
+     * 根据当前租户id获取用户列表
+     * @param page
+     * @param tenantId
+     * @return
+     */
+    Result<PageResult<User>> getUserListByTenantId(QueryPageEntity<User> page,String tenantId);
 }

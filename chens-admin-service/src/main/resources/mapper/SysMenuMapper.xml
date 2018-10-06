@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chens.admin.mapper.SysMenuMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, parent_id AS parentId, type, name, url, description, create_time AS createTime, update_time AS updateTime, create_by AS createBy, update_by AS updateBy, seq, isopen, icon,code
+    </sql>
+
+    <!-- 用户对应菜单 -->
+    <select id="getMenuListByUserId" resultType="com.chens.admin.entity.SysMenu">
+        select <include refid="Base_Column_List"/> from sys_menu
+        where id in(
+            select rm.menu_id from sys_user_role sur,sys_role_menu rm
+            where sur.role_id = rm.role_id
+            and sur.user_id=#{userId}
+        )
+
+    </select>
+
+
+
+</mapper>

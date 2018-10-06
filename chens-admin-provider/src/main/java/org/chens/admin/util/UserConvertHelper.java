@@ -1,7 +1,7 @@
-package org.chens.admin.handler;
+package org.chens.admin.util;
 
 import org.chens.admin.entity.SysUser;
-import org.chens.framework.login.vo.UserInfo;
+import org.chens.core.vo.UserInfo;
 
 /**
  * 系统用户转换
@@ -9,7 +9,7 @@ import org.chens.framework.login.vo.UserInfo;
  * @author songchunlei@qq.com
  * @create 2018/5/14
  */
-public class UserHandler {
+public class UserConvertHelper {
 
     /**
      * SysUser --> UserInfo

@@ -11,7 +11,7 @@ import org.chens.core.tree.BaseTree;
 import org.chens.core.tree.TreeUtil;
 import org.chens.core.util.StringUtils;
 import org.chens.core.vo.Result;
-import org.chens.framework.login.exception.AuthExceptionEnum;
+import org.chens.framework.auth.exception.AuthExceptionEnum;
 import org.chens.framework.security.IPasswordCoder;
 import org.chens.framework.security.impl.PasswordCoderByBcrypt;
 import org.chens.framework.util.BeanUtil;

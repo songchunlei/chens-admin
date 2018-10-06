@@ -2,7 +2,6 @@ package org.chens.admin.service;
 
 import org.chens.admin.entity.SysTenant;
 import com.baomidou.mybatisplus.service.IService;
-import org.chens.admin.vo.RegisterTenant;
 
 /**
  * <p>
